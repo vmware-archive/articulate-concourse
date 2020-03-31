@@ -1,0 +1,22 @@
+---
+    platform: linux
+    
+    image_resource:
+      type: docker-image
+      source:
+        repository: mikefarah/yq
+    inputs:
+      - name: helmchart-semver
+      - name: articulate-ci
+        path: ci
+    run:        
+      path: ./ci/tasks/scan/scan.sh
+    #run:
+    #  dir: code
+    #  path: ls
+    #  args: ["-lRta"]
+
+    params:
+      HARBOR_HOST: ((harbor.host))
+      HARBOR_USERNAME: ((harbor.username))
+      HARBOR_PASSWORD: ((harbor.password))

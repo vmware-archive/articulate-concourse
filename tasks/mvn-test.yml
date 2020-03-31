@@ -1,0 +1,14 @@
+platform: linux
+
+image_resource:
+    type: docker-image
+    source:
+        repository: maven
+        tag: 3.6.3-jdk-11-slim 
+inputs:
+    - name: articulate-repo
+      path: code
+run:
+    dir: code
+    path: mvn
+    args: [ test ]

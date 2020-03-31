@@ -1,0 +1,16 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: busybox
+inputs:
+  - name: articulate
+    path: code
+run:        
+  path: ./code/config/list-files.sh
+#run:
+#  dir: code
+#  path: ls
+#  args: ["-lRta"]
