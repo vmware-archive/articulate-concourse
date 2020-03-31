@@ -131,6 +131,7 @@
       serial: true
       plan:
       - get: articulate-ci
+      - get: articulate-repo
         passed: [build-image]
         trigger: true
       - get: helmchart-semver
