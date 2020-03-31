@@ -1,0 +1,23 @@
+harbor-username: example
+harbor-password: example
+
+PKS_API:    example
+PKS_CLI_USERNAME:   example
+PKS_CLI_PASSWORD:   example
+PKS_CLUSTER_NAME:   example
+
+harbor.host: harbor.pivotal.io
+harbor.username:    example 
+harbor.password:    example 
+
+slack_webhook_url:  example
+concourse_host: concourse.pivotal.io
+slack_logo: https://raw.githubusercontent.com/spring-projects/sts4/master/vscode-extensions/vscode-concourse/icon.png
+
+articulate-helmchart: git@github.com:Pivotal-Field-Engineering/articulate-helmchart.git
+articulate-repo: git@github.com:Pivotal-Field-Engineering/articulate-repo.git
+articulate-ci: git@github.com:Pivotal-Field-Engineering/articulate-concourse.git
+
+GIT_PRIVATE_KEY: |
+  -----BEGIN RSA PRIVATE KEY-----example
+  -----END RSA PRIVATE KEY-----example
