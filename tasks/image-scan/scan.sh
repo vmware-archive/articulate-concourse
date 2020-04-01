@@ -80,7 +80,7 @@ for row in $(echo "${harbor_scan_thresholds}" | jq -r '.[] | @base64'); do
     cve_sev=$(_jq '.severity')
     cve_threshold=$(_jq '.count')
 
-    get_count_cmd="echo '$harbor_curl_scan_summary' | jq ' .summary[] | select(.severity == $cve_sev) | .count'"
+    get_count_cmd="echo '$harbor_curl_scan_summary' | jq ' .summary.$cve_sev) '"
     count=$(eval $get_count_cmd)
     if [ ! -z $count ] && [ $count -gt $cve_threshold ]; then
         echo "Image exceed threshold of $cve_threshold for CVE-Severity:$cve_sev with a count of $count"
