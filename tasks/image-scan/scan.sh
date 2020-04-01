@@ -15,7 +15,7 @@ harbor_host=$harbor_host
 harbor_scan_thresholds=$harbor_scan_thresholds
 
 export harbor_image=$(echo $repository | cut -f2- -d '/')
-export harbor_respoitory_encoded=$(urlencode $harbor_image)
+export harbor_respoitory_encoded=$harbor_image
 export scan_check_tries=10
 export scan_check_interval=5
 
