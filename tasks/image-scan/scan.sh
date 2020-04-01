@@ -8,7 +8,8 @@ TAG_NAME=`cat articulate-image/tag`
 IMAGEID=`cat articulate-image/image-id`
 DIGEST=`cat articulate-image/digest`
 
-echo $IMAGEID-$DIGEST-$TAG_NAME
+echo ${IMAGEID}-${DIGEST}-${TAG_NAME}
+echo "Testing\n\n\n"
 
 echo https://${HARBOR_HOST}/api/repositories/hemanth/pks-demo/tags/${TAG_NAME}
 
