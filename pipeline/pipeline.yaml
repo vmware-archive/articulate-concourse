@@ -97,9 +97,10 @@
     - name: test
       public: true
       plan:
-        - get: articulate-ci
-        - get: articulate-repo
-          trigger: true
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-repo
+            trigger: true
         - task: unit-test
           file: articulate-ci/tasks/mvn-test.yml
       on_failure:
@@ -114,11 +115,12 @@
       public: true
       serial: true
       plan:
-      - get: articulate-repo
-        passed: [test]
-        trigger: true
-      - get: helmchart-semver
-        params: {bump: patch}
+      - in_parallel:
+        - get: articulate-repo
+          passed: [test]
+          trigger: true
+        - get: helmchart-semver
+          params: {bump: patch}
       - put: articulate-image
         params:
           build: articulate-repo
