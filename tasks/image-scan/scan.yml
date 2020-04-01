@@ -4,7 +4,7 @@
     image_resource:
       type: docker-image
       source:
-        repository: mikefarah/yq
+        repository: warroyo90/harbor-scan-resource
     inputs:
       - name: articulate-ci
         path: ci
