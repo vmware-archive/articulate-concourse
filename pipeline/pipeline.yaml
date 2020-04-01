@@ -120,25 +120,29 @@
           passed: [test]
           trigger: true
         - get: helmchart-semver
-          params: {bump: patch}
+          params:
+            bump: patch
       - put: articulate-image
         params:
           build: articulate-repo
           # tag_file: helmchart-semver/version
           tag_file: articulate-repo/.git/refs/heads/master
           tag_as_latest: true
-        get_params: {skip_download: true}
+        get_params:
+          skip_download: true
   
     - name: cve-scan-harbor-image
       public: true
       serial: true
       plan:
-      - get: articulate-ci
-      - get: articulate-repo
-        passed: [build-image]
-        trigger: true
-      - get: helmchart-semver
-        params: {bump: patch}
+      - in_parallel:
+        - get: articulate-ci
+        - get: articulate-repo
+          passed: [build-image]
+          trigger: true
+        - get: helmchart-semver
+          params:
+            bump: patch
       - task: cve-scan-harbor-image
         file: articulate-ci/tasks/scan/scan.yml
         params:
@@ -151,24 +155,27 @@
           text: >
             :x: Container Images has vulnerability of severity of High or Critical.
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
-  
+
     - name: update-helm-chart
       public: true
       serial: true
       plan:
       - get: helmchart-semver
-        params: {bump: patch}
+        params:
+          bump: patch
         passed: [cve-scan-harbor-image]
         trigger: true
       - put: helmchart-semver
-        params: {bump: patch}
+        params:
+          bump: patch
   
     - name: deploy-articulate-test
       public: true
       plan:
-        - get: articulate-ci
-        - get: articulate-helmchart
-          trigger: true
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
         - task: deploy-articulate-app
           file: articulate-ci/tasks/deploy-demo-app.yml
           params:
@@ -192,10 +199,11 @@
     - name: test-articulate-testenv
       public: true
       plan:
-        - get: articulate-ci
-        - get: articulate-helmchart
-          trigger: true
-          passed: [deploy-articulate-test]
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [deploy-articulate-test]
         - task: test-articulate-testenv
           file: articulate-ci/tasks/test-app/task.yml
           params:
@@ -215,13 +223,14 @@
     - name: promote-to-prod
       public: true
       plan:
-        - get: articulate-helmchart
-          passed: [test-articulate-testenv]
-        - get: helmchart-semver
-        - get: helmchart-semver-prod
-          resource: helmchart-semver
-          params:
-            bump: minor
+        - in_parallel:
+          - get: articulate-helmchart
+            passed: [test-articulate-testenv]
+          - get: helmchart-semver
+          - get: helmchart-semver-prod
+            resource: helmchart-semver
+            params:
+              bump: minor
         - put: articulate-image
           params:
             pull_repository: harbor.caas.pez.pivotal.io:443/hemanth/pks-demo
@@ -230,18 +239,20 @@
             username: ((harbor-username))
             password: ((harbor-password))
             tag_as_latest: true
-          get_params: {skip_download: true}
-  
+          get_params:
+            skip_download: true
         - put: helmchart-semver
-          params: {bump: minor}
-  
+          params:
+            bump: minor
+
     - name: deploy-articulate-prod
       public: true
       plan:
-        - get: articulate-ci
-        - get: articulate-helmchart
-          trigger: true
-          passed: [promote-to-prod]
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [promote-to-prod]
         - task: deploy-articulate-app
           file: articulate-ci/tasks/deploy-demo-app.yml
           params:
@@ -265,10 +276,11 @@
     - name: test-articulate-prodenv
       public: true
       plan:
-        - get: articulate-ci
-        - get: articulate-helmchart
-          trigger: true
-          passed: [deploy-articulate-prod]
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [deploy-articulate-prod]
         - task: test-articulate-prodenv
           file: articulate-ci/tasks/test-app/task.yml
           params:
