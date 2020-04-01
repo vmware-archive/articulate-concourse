@@ -9,7 +9,7 @@
       - name: articulate-ci
         path: ci
     run:        
-      path: ./ci/tasks/image-scan/temp.sh
+      path: ./ci/tasks/image-scan/scan.sh
 
     params:
       HARBOR_HOST: ((harbor.host))
