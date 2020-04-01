@@ -39,11 +39,6 @@ harbor_curl_scan_summary() {
         echo $response
 }
 
-harbor_curl_scan_details() {
-        response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag/vulnerability/details" | jq .)
-        echo $response
-}
-
 echo "Triggering Image scan..."
   	harbor_curl_scan
 
@@ -95,7 +90,7 @@ if [ $threshold_trigger = true ]; then
     echo "DETAILED CVE ANALYSIS:"
     echo "==========================================================================="
 
-    harbor_curl_scan_details | jq .
+    echo $harbor_curl_scan_summary | jq .
     exit 1
 fi
 
