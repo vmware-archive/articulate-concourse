@@ -8,6 +8,7 @@
     inputs:
       - name: articulate-ci
         path: ci
+      - name: articulate-repo
     run:        
       path: ./ci/tasks/image-scan/scan.sh
 
