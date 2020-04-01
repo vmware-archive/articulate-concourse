@@ -30,7 +30,7 @@ harbor_curl_scan() {
     }
 
 harbor_curl_scan_check() {
-    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq .scan_overview.scan_status | tr -d "\"")
+    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq '.scan_overview[].scan_status' | tr -d "\"")
     echo $response
 }
 
@@ -52,9 +52,10 @@ echo "Triggering Image scan..."
 
 for i in $(seq 1 $scan_check_tries);
 do
+    echo $(harbor_curl_scan_check)
     scan_state=$(harbor_curl_scan_check)
     echo "Checking if Clair Scan is finished, attempt $i of $scan_check_tries ... RESULT: $scan_state"
-    if [ $scan_state = "finished" ]; then
+    if [ $scan_state = "Success" ]; then
         echo "Clair Scan Complete"
         break
     else
