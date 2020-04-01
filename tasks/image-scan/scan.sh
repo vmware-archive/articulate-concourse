@@ -7,11 +7,11 @@ exec 1>&2 # redirect all output to stderr for logging
 
 source $(dirname $0)/common.sh
 
-username=$(username)
-password=$(password)
-repository=$(repository)
-tag=`cat $(tag)`
-harbor_host=$(harbor_host)
+username=$username
+password=$password
+repository=$repository
+tag=$(cat $tag)
+harbor_host=$harbor_host
 harbor_scan_thresholds=$(jq -r harbor_scan_thresholds)
 
 export harbor_image=$(echo $repository | cut -f2- -d '/')
