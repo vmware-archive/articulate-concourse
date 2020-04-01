@@ -7,25 +7,12 @@ exec 1>&2 # redirect all output to stderr for logging
 
 source $(dirname $0)/common.sh
 
-source=$1
-
-if [ -z "$source" ]; then
-  echo "usage: $0 <path/to/source>"
-  exit 1
-fi
-
-payload=$(mktemp /tmp/harbor-scan-resource-request.XXXXXX)
-
-cat > $payload <&0
-
-cd $source
-
-username=$(jq -r '.source.username // ""' < $payload)
-password=$(jq -r '.source.password // ""' < $payload)
-repository="$(jq -r '.params.repository // ""' < $payload)"
-tag="$(jq -r '.params.tag // "latest"' < $payload)"
-harbor_host=$(jq -r '.source.harbor_host // ""' < $payload)
-harbor_scan_thresholds=$(jq -r '.params.harbor_scan_thresholds // ""' < $payload)
+username=$(username)
+password=$(password)
+repository=$(repository)
+tag=`cat $(tag)`
+harbor_host=$(harbor_host)
+harbor_scan_thresholds=$(jq -r harbor_scan_thresholds)
 
 export harbor_image=$(echo $repository | cut -f2- -d '/')
 export harbor_respoitory_encoded=$(urlencode $harbor_image)

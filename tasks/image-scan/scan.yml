@@ -12,6 +12,7 @@
       path: ./ci/tasks/image-scan/scan.sh
 
     params:
-      HARBOR_HOST: ((harbor.host))
-      HARBOR_USERNAME: ((harbor.username))
-      HARBOR_PASSWORD: ((harbor.password))
+      harbor_host: ((harbor-host))
+      username: ((harbor-username))
+      password: ((harbor-password))
+      repository: ((harbor-host))/hemanth/pks-demo
