@@ -6,7 +6,6 @@
       source:
         repository: mikefarah/yq
     inputs:
-      - name: articulate-image
       - name: articulate-ci
         path: ci
     run:        
