@@ -21,7 +21,7 @@ export scan_check_interval=5
 
 harbor_curl_scan() {
     	response=$(curl -sk --write-out "%{http_code}\n" --output /dev/null -H "Content-Type: application/json" -X POST --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag/scan" )
-    	if [ $response != "200" ]; then
+    	if [ $response != "202" ]; then
     		echo "Failed to initiate Harbor Scan on https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag !!!"
     		exit 1
     	else
