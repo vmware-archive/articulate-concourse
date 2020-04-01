@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 urlencode() {
             local _length="${#1}"
             for (( _offset = 0 ; _offset < _length ; _offset++ )); do
