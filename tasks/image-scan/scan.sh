@@ -35,7 +35,7 @@ harbor_curl_scan_check() {
 }
 
 harbor_curl_scan_summary() {
-    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq .scan_overview.components)
+    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq '.scan_overview[].summary')
         echo $response
 }
 
