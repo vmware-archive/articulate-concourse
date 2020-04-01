@@ -122,7 +122,8 @@
       - put: articulate-image
         params:
           build: articulate-repo
-          tag_file: helmchart-semver/version
+          # tag_file: helmchart-semver/version
+          tag_file: articulate-repo/.git/refs/heads/master
           tag_as_latest: true
         get_params: {skip_download: true}
   
