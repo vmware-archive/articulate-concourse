@@ -12,7 +12,7 @@ password=$password
 repository=$repository
 tag=$(cat $tag)
 harbor_host=$harbor_host
-harbor_scan_thresholds=$(jq -r harbor_scan_thresholds)
+harbor_scan_thresholds=$harbor_scan_thresholds
 
 export harbor_image=$(echo $repository | cut -f2- -d '/')
 export harbor_respoitory_encoded=$(urlencode $harbor_image)
