@@ -4,7 +4,7 @@
       jobs:
         - test
         - build-image
-        - scan-harbor-image
+        - cve-scan-harbor-image
         - update-helm-chart
         - deploy-articulate-test
         - test-articulate-testenv
@@ -30,9 +30,9 @@
         - promote-to-prod
         - deploy-articulate-prod
         - test-articulate-prodenv
-    - name: Scanv1
-      jobs:
-        - scan-harbor-image
+    # - name: Scanv1
+    #   jobs:
+    #     - scan-harbor-image
   
   resource_types:  
     - name: slack-notification
@@ -49,6 +49,7 @@
         branch: master
         disable_ci_skip: false
         private_key: ((GIT_PRIVATE_KEY))
+
     - name: articulate-helmchart
       type: git
       icon: github-circle
@@ -57,6 +58,7 @@
         branch: master
         disable_ci_skip: true
         private_key: ((GIT_PRIVATE_KEY))
+
     - name: articulate-ci
       type: git
       icon: github-circle
@@ -74,16 +76,17 @@
         insecure_registries: [ "harbor.caas.pez.pivotal.io:443" ]
         username: ((harbor-username))
         password: ((harbor-password))
-  
-    - name: helmchart-semver
+
+    - name: articulate-version
       type: semver
       icon: &release-icon package-variant-closed
       source:
         driver: git
         uri: ((articulate-helmchart))
         branch: master
-        file: articulate/version
+        file: articulate/articulate-version
         commit_message: "ci skip"
+        #commit_message: "%version% %file%"
         private_key: ((GIT_PRIVATE_KEY))
         initial_version: 1.0.0
   
@@ -95,6 +98,7 @@
   
   jobs:
     - name: test
+      serial_groups: [articulate-version]
       public: true
       plan:
         - in_parallel:
@@ -111,6 +115,7 @@
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
     - name: build-image
+      serial_groups: [articulate-version]
       public: true
       serial: true
       plan:
@@ -118,26 +123,28 @@
         - get: articulate-repo
           passed: [test]
           trigger: true
-        - get: helmchart-semver
+        - get:  articulate-version
           params:
             bump: patch
       - put: articulate-image
         params:
           build: articulate-repo
-          # tag_file: helmchart-semver/version
-          tag_file: articulate-repo/.git/refs/heads/master
+          tag_file: articulate-version/version
+          #tag_file: articulate-repo/.git/refs/heads/master
           tag_as_latest: true
         get_params:
           skip_download: true
 
-    - name: scan-harbor-image
+    - name: cve-scan-harbor-image
       public: false
       serial: true
       plan:
         - get: articulate-ci
-        - get: articulate-repo
+        - get: articulate-version
           passed: [build-image]
           trigger: true
+          params:
+            bump: patch
         - task: scan-harbor-image
           file: articulate-ci/tasks/image-scan/scan.yml
           params:
@@ -150,7 +157,8 @@
               count: 0
             - severity: Critical
               count: 0
-            tag: articulate-repo/.git/refs/heads/master
+            #tag: articulate-repo/.git/refs/heads/master
+            tag: articulate-version/version
             harbor_host: ((harbor-host))
             username: ((harbor-username))
             password: ((harbor-password))
@@ -162,44 +170,42 @@
             :x: Container Images has vulnerability of severity of High or Critical.
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
 
-    - name: cve-scan-harbor-image
-      public: true
-      serial: true
-      plan:
-      - in_parallel:
-        - get: articulate-ci
-        - get: articulate-repo
-          passed: [build-image]
-          trigger: true
-        - get: helmchart-semver
-          params:
-            bump: patch
-      - task: cve-scan-harbor-image
-        file: articulate-ci/tasks/scan/scan.yml
-        params:
-          HARBOR_HOST: ((harbor-host))
-          HARBOR_USERNAME: ((harbor-username))
-          HARBOR_PASSWORD: ((harbor-password))
-      on_failure:
-        put: notify-team
-        params:
-          text: >
-            :x: Container Images has vulnerability of severity of High or Critical.
-            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+    # - name: cve-scan-harbor-image
+    #   public: true
+    #   serial: true
+    #   plan:
+    #   - in_parallel:
+    #     - get: articulate-ci
+    #     - get: articulate-repo
+    #       passed: [build-image]
+    #       trigger: true
+    #     - get: articulate-version
+    #       params:
+    #         bump: patch
+    #   - task: cve-scan-harbor-image
+    #     file: articulate-ci/tasks/scan/scan.yml
+    #     params:
+    #       HARBOR_HOST: ((harbor-host))
+    #       HARBOR_USERNAME: ((harbor-username))
+    #       HARBOR_PASSWORD: ((harbor-password))
+    #   on_failure:
+    #     put: notify-team
+    #     params:
+    #       text: >
+    #         :x: Container Images has vulnerability of severity of High or Critical.
+    #         Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
 
     - name: update-helm-chart
       public: true
       serial: true
       plan:
-      - get: helmchart-semver
-        params:
-          bump: patch
+      - get: articulate-version
         passed: [cve-scan-harbor-image]
         trigger: true
-      - put: helmchart-semver
+      - put: articulate-version
         params:
           bump: patch
-  
+
     - name: deploy-articulate-test
       public: true
       plan:
@@ -257,9 +263,9 @@
         - in_parallel:
           - get: articulate-helmchart
             passed: [test-articulate-testenv]
-          - get: helmchart-semver
-          - get: helmchart-semver-prod
-            resource: helmchart-semver
+          - get: articulate-version
+          - get: articulate-version-prod
+            resource: articulate-version
             params:
               bump: minor
         - put: articulate-image
@@ -272,7 +278,7 @@
             tag_as_latest: true
           get_params:
             skip_download: true
-        - put: helmchart-semver
+        - put: articulate-version
           params:
             bump: minor
 
@@ -326,3 +332,5 @@
           text: >
             Test Articulate Prod Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+
+            
