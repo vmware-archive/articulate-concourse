@@ -11,11 +11,3 @@
       - name: articulate-version
     run:        
       path: ./ci/tasks/image-scan/scan.sh
-
-    #params:
-      #harbor_host: ((harbor_host))
-      #username: ((harbor-username))
-      #password: ((password))
-      #repository: ((harbor-host))/hemanth/pks-demo
-      #harbor_scan_thresholds: [{"severity": 4,"count": 10},{"severity": 5,"count": 1}]
-      #tag: articulate-repo/.git/refs/heads/master
