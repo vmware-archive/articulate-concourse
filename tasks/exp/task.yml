@@ -5,12 +5,5 @@ image_resource:
     source:
         repository: pivotalservices/pks-kubectl
 
-inputs:
-- name: articulate-helmchart
-  path: code
-- name: articulate-ci
-  path: ci
-
-
 run:
   path: ./ci/tasks/test-app/task.sh
