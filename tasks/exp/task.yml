@@ -4,6 +4,8 @@ image_resource:
     type: docker-image
     source:
         repository: pivotalservices/pks-kubectl
-
+inputs:
+- name: articulate-ci
+  path: ci
 run:
-  path: ./ci/tasks/test-app/task.sh
+  path: ./ci/tasks/exp/task.sh
