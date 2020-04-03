@@ -332,5 +332,3 @@
           text: >
             Test Articulate Prod Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
-
-            
