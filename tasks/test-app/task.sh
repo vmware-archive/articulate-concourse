@@ -4,14 +4,11 @@ set -eu
 
 echo "Login to PKS API [$PKS_API]"
 pks login -a "$PKS_API" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification
-echo "Retrieve cluster credentials and configuration for [${k8s-cluster-name}]"
-pks get-credentials "${k8s-cluster-name}"
-if [[ "$PKS_SKIP_TLS_VERIFY" == "true" ]]; then
-kubectl config set-cluster "${k8s-cluster-name}" --certificate-authority=""
-kubectl config set-cluster "${k8s-cluster-name}" --insecure-skip-tls-verify=true
-fi
-echo "Switch kubectl context to [${k8s-cluster-name}]"
-kubectl config use-context ${k8s-cluster-name}
+echo "Retrieve cluster credentials and configuration for [${k8s_cluster_name}]"
+pks get-credentials "${k8s_cluster_name}"
+
+echo "Switch kubectl context to [${k8s_cluster_name}]"
+kubectl config use-context ${k8s_cluster_name}
 kubectl cluster-info
 
 echo "Test Application..."
