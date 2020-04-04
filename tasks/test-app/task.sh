@@ -17,4 +17,4 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scr
 chmod 700 get_helm.sh
 ./get_helm.sh
 
-helm test ins1
+helm test ${helm_release}
