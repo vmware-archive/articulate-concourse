@@ -15,9 +15,9 @@ inputs:
 run:
   path: ./ci/tasks/test-app/task.sh
 
-params:
-  PKS_API: ((PKS_API))
-  PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
-  PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-  PKS_CLUSTER_NAME: ((PKS_CLUSTER_NAME))
-  PKS_SKIP_TLS_VERIFY: true
+# params:
+#   PKS_API: ((PKS_API))
+#   PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+#   PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+#   k8s-cluster-name: ((k8s-cluster-name))
+#   PKS_SKIP_TLS_VERIFY: true
