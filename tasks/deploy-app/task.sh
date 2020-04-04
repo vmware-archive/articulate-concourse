@@ -3,6 +3,10 @@
 set -eu
 
 echo "Login to PKS API [$PKS_API]"
+echo "${k8s-cluster-name}"
+echo ${k8s-cluster-name}
+echo $k8s-cluster-name
+
 pks login -a "$PKS_API" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification
 echo "Retrieve cluster credentials and configuration for [${k8s-cluster-name}]"
 pks get-credentials "${k8s-cluster-name}"
