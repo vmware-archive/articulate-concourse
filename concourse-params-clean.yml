@@ -1,16 +1,19 @@
-harbor-username: example
-harbor-password: example
-
-PKS_API:    example
+PKS_API:    example  
 PKS_CLI_USERNAME:   example
 PKS_CLI_PASSWORD:   example
-PKS_CLUSTER_NAME:   example
 
-harbor.host: harbor.pivotal.io
-harbor.username:    example 
-harbor.password:    example 
+k8s-test-cluster-name:   articulate-test
+k8s-prod-cluster-name:   articulate-prod
 
-slack_webhook_url:  example
+harbor-host: harbor.pivotal.io
+harbor-username: example
+harbor-password: example
+harbor-project: articulate
+articulate-image: articulate
+
+helm_release: articulate
+
+slack_webhook_url: example
 concourse_host: concourse.pivotal.io
 slack_logo: https://raw.githubusercontent.com/spring-projects/sts4/master/vscode-extensions/vscode-concourse/icon.png
 

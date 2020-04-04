@@ -72,8 +72,8 @@
       type: docker-image
       icon: docker
       source:
-        repository: harbor.caas.pez.pivotal.io:443/hemanth/pks-demo
-        insecure_registries: [ "harbor.caas.pez.pivotal.io:443" ]
+        repository: ((harbor-host)):443/((harbor-project))/((articulate-image))
+        insecure_registries: [ "((harbor-host)):443" ]
         username: ((harbor-username))
         password: ((harbor-password))
 
@@ -98,8 +98,6 @@
   
   jobs:
     - name: test
-      serial_groups: [articulate-version]
-      public: true
       plan:
         - in_parallel:
           - get: articulate-ci
@@ -115,9 +113,8 @@
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
     - name: build-image
-      serial_groups: [articulate-version]
+      serial_groups: [build-scan-image]
       public: true
-      serial: true
       plan:
       - in_parallel:
         - get: articulate-repo
@@ -136,8 +133,8 @@
           skip_download: true
 
     - name: cve-scan-harbor-image
+      serial_groups: [build-scan-image]
       public: false
-      serial: true
       plan:
         - get: articulate-ci
         - get: articulate-version
@@ -162,7 +159,7 @@
             harbor_host: ((harbor-host))
             username: ((harbor-username))
             password: ((harbor-password))
-            repository: ((harbor-host))/hemanth/pks-demo
+            repository: ((harbor-host))/((harbor-project))/((articulate-image))
       on_failure:
         put: notify-team
         params:
@@ -170,34 +167,8 @@
             :x: Container Images has vulnerability of severity of High or Critical.
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
 
-    # - name: cve-scan-harbor-image
-    #   public: true
-    #   serial: true
-    #   plan:
-    #   - in_parallel:
-    #     - get: articulate-ci
-    #     - get: articulate-repo
-    #       passed: [build-image]
-    #       trigger: true
-    #     - get: articulate-version
-    #       params:
-    #         bump: patch
-    #   - task: cve-scan-harbor-image
-    #     file: articulate-ci/tasks/scan/scan.yml
-    #     params:
-    #       HARBOR_HOST: ((harbor-host))
-    #       HARBOR_USERNAME: ((harbor-username))
-    #       HARBOR_PASSWORD: ((harbor-password))
-    #   on_failure:
-    #     put: notify-team
-    #     params:
-    #       text: >
-    #         :x: Container Images has vulnerability of severity of High or Critical.
-    #         Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
-
     - name: update-helm-chart
       public: true
-      serial: true
       plan:
       - get: articulate-version
         passed: [cve-scan-harbor-image]
@@ -214,12 +185,13 @@
           - get: articulate-helmchart
             trigger: true
         - task: deploy-articulate-app
-          file: articulate-ci/tasks/deploy-demo-app.yml
+          file: articulate-ci/tasks/deploy-app/task.yml
           params:
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-            PKS_CLUSTER_NAME: ((PKS_CLUSTER_NAME))
+            k8s_cluster_name: ((k8s-test-cluster-name))
+            helm_release: ((helm_release))
             PKS_SKIP_TLS_VERIFY: true
       on_success:
         put: notify-team
@@ -247,8 +219,9 @@
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-            PKS_CLUSTER_NAME: ((PKS_CLUSTER_NAME))
+            k8s_cluster_name: ((k8s-test-cluster-name))
             PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
       on_failure:
         put: notify-team
         params:
@@ -256,7 +229,7 @@
             Test Articulate Test Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
-  
+
     - name: promote-to-prod
       public: true
       plan:
@@ -270,8 +243,8 @@
               bump: minor
         - put: articulate-image
           params:
-            pull_repository: harbor.caas.pez.pivotal.io:443/hemanth/pks-demo
-            tag_file: helmchart-semver-prod/version
+            pull_repository: ((harbor-host)):443/((harbor-project))/((articulate-image))
+            tag_file: articulate-version-prod/version
             pull_tag: latest
             username: ((harbor-username))
             password: ((harbor-password))
@@ -291,13 +264,14 @@
             trigger: true
             passed: [promote-to-prod]
         - task: deploy-articulate-app
-          file: articulate-ci/tasks/deploy-demo-app.yml
+          file: articulate-ci/tasks/deploy-app/task.yml
           params:
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-            PKS_CLUSTER_NAME: ((PKS_CLUSTER_NAME))
+            k8s_cluster_name: ((k8s-prod-cluster-name))
             PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
       on_success:
         put: notify-team
         params:
@@ -324,8 +298,9 @@
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-            PKS_CLUSTER_NAME: ((PKS_CLUSTER_NAME))
+            k8s_cluster_name: ((k8s-prod-cluster-name))
             PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
       on_failure:
         put: notify-team
         params:
