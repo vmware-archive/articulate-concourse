@@ -10,3 +10,5 @@ Concourse CI/CD Pipeline for articulate application
 - [ ] Deploy Application in K8S Clusters in Two different Environments ( vSphere and AWS)
 - [ ] Demostrate Blue Green Deployment
 - [ ] Access the Application using Global Server Load Balancer or Istio
+- [ ] Integrate Tanzu Build Service
+- [ ] Integrate Tanzu Application Catalog 
