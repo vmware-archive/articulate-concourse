@@ -6,7 +6,6 @@ echo "Login to PKS API [$PKS_API]"
 
 pks login -a "$PKS_API" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification
 echo "Retrieve cluster credentials and configuration for [${k8s_cluster_name}]"
-pks get-credentials 
 
 pks get-kubeconfig "${k8s_cluster_name}" -a api.pks.caas.pez.pivotal.io -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" -k 2>&1
 
