@@ -1,0 +1,6 @@
+k8s-test-cluster-name:   articulate-test
+k8s-prod-cluster-name:   articulate-prod
+harbor-project: articulate
+articulate-image: articulate
+helm_release: articulate
+articulate-repo-branch: develop

@@ -22,4 +22,4 @@ chmod 700 get_helm.sh
 version=`cat ./code/articulate/articulate-version`
 cd ./code
 echo "Deploying App - $version"
-helm upgrade --install ${helm_release} articulate --set articulateVersion=$version
+helm upgrade --install ${helm_release} articulate --set articulateVersion=$version --namespace ${k8s_cluster_ns}

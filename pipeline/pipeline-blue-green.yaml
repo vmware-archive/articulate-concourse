@@ -1,0 +1,309 @@
+---
+  groups:
+    - name: Articulate Blue Green pipeline
+      jobs:
+        - test
+        - build-image
+        - cve-scan-harbor-image
+        - update-helm-chart
+        - deploy-articulate-test
+        - test-articulate-testenv
+        - promote-to-prod
+        - deploy-articulate-prod
+        - test-articulate-prodenv
+    - name: Test
+      jobs:
+        - test
+    - name: Build
+      jobs:
+        - build-image
+    - name: Scan
+      jobs:
+        - cve-scan-harbor-image
+    - name: Publish
+      jobs:
+        - update-helm-chart
+    - name: Deploy
+      jobs:
+        - deploy-articulate-test
+        - test-articulate-testenv
+        - promote-to-prod
+        - deploy-articulate-prod
+        - test-articulate-prodenv
+    # - name: Scanv1
+    #   jobs:
+    #     - scan-harbor-image
+  
+  resource_types:  
+    - name: slack-notification
+      type: registry-image
+      source:
+        repository: cfcommunity/slack-notification-resource
+
+  resources:  
+    - name: articulate-repo
+      type: git
+      icon: github-circle
+      source:
+        uri: ((articulate-repo))
+        branch: ((articulate-repo-branch))
+        disable_ci_skip: false
+        private_key: ((GIT_PRIVATE_KEY))
+
+    - name: articulate-helmchart
+      type: git
+      icon: github-circle
+      source:
+        uri: ((articulate-helmchart))
+        branch: ((articulate-helmchart-branch))
+        disable_ci_skip: true
+        private_key: ((GIT_PRIVATE_KEY))
+
+    - name: articulate-ci
+      type: git
+      icon: github-circle
+      source:
+        uri: ((articulate-ci))
+        branch: master
+        disable_ci_skip: true
+        private_key: ((GIT_PRIVATE_KEY))
+
+    - name: articulate-image
+      type: docker-image
+      icon: docker
+      source:
+        repository: ((harbor-host)):443/((harbor-project))/((articulate-image))
+        insecure_registries: [ "((harbor-host)):443" ]
+        username: ((harbor-username))
+        password: ((harbor-password))
+
+    - name: articulate-version
+      type: semver
+      icon: &release-icon package-variant-closed
+      source:
+        driver: git
+        uri: ((articulate-helmchart))
+        branch: ((articulate-helmchart-branch))
+        file: articulate/articulate-version
+        commit_message: "ci skip"
+        #commit_message: "%version% %file%"
+        private_key: ((GIT_PRIVATE_KEY))
+        initial_version: 1.0.0
+  
+    - name: notify-team
+      type: slack-notification
+      icon: slack
+      source:
+        url: ((slack_webhook_url))
+  
+  jobs:
+    - name: test
+      plan:
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-repo
+            trigger: true
+        - task: unit-test
+          file: articulate-ci/tasks/mvn-test.yml
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            :x: Unit Test failing on the Articulate repo
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+  
+    - name: build-image
+      serial_groups: [build-scan-image]
+      public: true
+      plan:
+      - in_parallel:
+        - get: articulate-repo
+          passed: [test]
+          trigger: true
+        - get:  articulate-version
+          params:
+            bump: patch
+      - put: articulate-image
+        params:
+          build: articulate-repo
+          tag_file: articulate-version/version
+          tag_as_latest: true
+        get_params:
+          skip_download: true
+
+    - name: cve-scan-harbor-image
+      serial_groups: [build-scan-image]
+      public: false
+      plan:
+        - get: articulate-ci
+        - get: articulate-version
+          passed: [build-image]
+          trigger: true
+          params:
+            bump: patch
+        - task: scan-harbor-image
+          file: articulate-ci/tasks/image-scan/scan.yml
+          params:
+            harbor_scan_thresholds: 
+            - severity: Low
+              count: 10
+            - severity: Medium
+              count: 5
+            - severity: High
+              count: 0
+            - severity: Critical
+              count: 0
+            tag: articulate-version/version
+            harbor_host: ((harbor-host))
+            username: ((harbor-username))
+            password: ((harbor-password))
+            repository: ((harbor-host))/((harbor-project))/((articulate-image))
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            :x: Container Images has vulnerability of severity of High or Critical.
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+
+    - name: update-helm-chart
+      public: true
+      plan:
+      - get: articulate-version
+        passed: [cve-scan-harbor-image]
+        trigger: true
+      - put: articulate-version
+        params:
+          bump: patch
+
+    - name: deploy-articulate-test
+      public: true
+      plan:
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+        - task: deploy-articulate-app
+          file: articulate-ci/tasks/deploy-app/task.yml
+          params:
+            PKS_API: ((PKS_API))
+            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+            k8s_cluster_name: ((k8s-blue-cluster-name))
+            k8s_cluster_ns: ((k8s-blue-cluster-ns))
+            helm_release: ((helm_release))
+            PKS_SKIP_TLS_VERIFY: true
+      on_success:
+        put: notify-team
+        params:
+          text: >
+            :rocket: Articulate deployed successfully!
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            Deploy Articulate Concourse Job Failured :x:
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+   
+    - name: test-articulate-testenv
+      public: true
+      plan:
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [deploy-articulate-test]
+        - task: test-articulate-testenv
+          file: articulate-ci/tasks/test-app/task.yml
+          params:
+            PKS_API: ((PKS_API))
+            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+            k8s_cluster_name: ((k8s-blue-cluster-name))
+            PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            Test Articulate Test Failured :x:
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+  
+
+    - name: promote-to-prod
+      public: true
+      plan:
+        - in_parallel:
+          - get: articulate-helmchart
+            passed: [test-articulate-testenv]
+          - get: articulate-version
+          - get: articulate-version-prod
+            resource: articulate-version
+            params:
+              bump: minor
+        - put: articulate-image
+          params:
+            pull_repository: ((harbor-host)):443/((harbor-project))/((articulate-image))
+            tag_file: articulate-version-prod/version
+            pull_tag: latest
+            username: ((harbor-username))
+            password: ((harbor-password))
+            tag_as_latest: true
+          get_params:
+            skip_download: true
+        - put: articulate-version
+          params:
+            bump: minor
+
+    - name: deploy-articulate-prod
+      public: true
+      plan:
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [promote-to-prod]
+        - task: deploy-articulate-app
+          file: articulate-ci/tasks/deploy-app/task.yml
+          params:
+            PKS_API: ((PKS_API))
+            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+            k8s_cluster_name: ((k8s-green-cluster-name))
+            k8s_cluster_ns: ((k8s-green-cluster-ns))
+            PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
+      on_success:
+        put: notify-team
+        params:
+          text: >
+            :rocket: Articulate deployed successfully!
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            Deploy Articulate Concourse Job Failured :x:
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
+  
+    - name: test-articulate-prodenv
+      public: true
+      plan:
+        - in_parallel:
+          - get: articulate-ci
+          - get: articulate-helmchart
+            trigger: true
+            passed: [deploy-articulate-prod]
+        - task: test-articulate-prodenv
+          file: articulate-ci/tasks/test-app/task.yml
+          params:
+            PKS_API: ((PKS_API))
+            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+            k8s_cluster_name: ((k8s-green-cluster-name))
+            PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
+      on_failure:
+        put: notify-team
+        params:
+          text: >
+            Test Articulate Prod Failured :x:
+            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
