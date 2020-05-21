@@ -219,6 +219,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-blue-cluster-name))
+            k8s_cluster_ns: ((k8s-blue-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
       on_failure:
@@ -299,6 +300,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-green-cluster-name))
+            k8s_cluster_ns: ((k8s-green-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
       on_failure:
