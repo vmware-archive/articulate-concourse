@@ -33,6 +33,7 @@ then
   echo "Deploying Application to $newSlot Environment"
 else
   echo "Skipping Deployment as it is not a $environment Environment"
+  exit 0
 fi
 
 version=`cat ./code/articulate/articulate-version`
