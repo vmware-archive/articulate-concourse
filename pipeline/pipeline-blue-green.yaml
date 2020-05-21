@@ -7,9 +7,8 @@
         - cve-scan-harbor-image
         - update-helm-chart
         - deploy-articulate-blue
-        - test-articulate-stage-env
         - deploy-articulate-green
-        - test-articulate-prod-env
+        - test-articulate-stage-env
         - switch-blue-green-traffic
     - name: Test
       jobs:
@@ -28,7 +27,6 @@
         - deploy-articulate-blue
         - deploy-articulate-green
         - test-articulate-stage-env
-        - test-articulate-prod-env
         - switch-blue-green-traffic  
   
   resource_types:  
@@ -233,7 +231,6 @@
         - in_parallel:
           - get: articulate-ci
             passed: [test-articulate-stage-env]
-            passed: [test-articulate-prod-env]
         - task: switch-blue-green-traffic
           file: articulate-ci/tasks/switch-blue-green-traffic/task.yml
           params:
@@ -275,28 +272,3 @@
             Deploy Articulate Concourse Job Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
-    - name: test-articulate-prod-env
-      public: true
-      plan:
-        - in_parallel:
-          - get: articulate-ci
-          - get: articulate-helmchart
-            trigger: true
-            passed: [deploy-articulate-green]
-            passed: [deploy-articulate-blue]
-        - task: test-articulate-prod-env
-          file: articulate-ci/tasks/test-app/task.yml
-          params:
-            PKS_API: ((PKS_API))
-            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
-            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
-            k8s_cluster_name: ((k8s-green-cluster-name))
-            k8s_cluster_ns: ((k8s-green-cluster-ns))
-            PKS_SKIP_TLS_VERIFY: true
-            helm_release: ((helm_release))
-      on_failure:
-        put: notify-team
-        params:
-          text: >
-            Test Articulate Prod Failured :x:
-            Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
