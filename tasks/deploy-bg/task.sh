@@ -35,7 +35,9 @@ else
   echo "Skipping Deployment as it is not a $environment Environment"
 fi
 
-articulateVersion=$newSlot.articulateVersion=$version
-helm upgrade --install ${helm_release} articulate --set $enableSlot --set $articulateVersion --namespace ${k8s_cluster_ns} --reuse-values
+version=`cat ./code/articulate/articulate-version`
+cd ./code
+echo "Deploying App - $version"
 
-echo "\n newSlot=$newSlot \n currentSlot=$currentSlot \n enableSlot=$newSlot.enabled=true \n productionSlot=productionSlot=$newSlot" | pbcopy
+articulateVersion=$newSlot.articulateVersion=$version
+helm upgrade --install ${helm_release} articulate --set $articulateVersion --namespace ${k8s_cluster_ns} --reuse-values
