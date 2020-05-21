@@ -6,11 +6,11 @@
         - build-image
         - cve-scan-harbor-image
         - update-helm-chart
-        - deploy-articulate-test
-        - test-articulate-testenv
+        - deploy-articulate-blue
+        - test-articulate-blueenv
         - promote-to-prod
-        - deploy-articulate-prod
-        - test-articulate-prodenv
+        - deploy-articulate-green
+        - test-articulate-greenenv
     - name: Test
       jobs:
         - test
@@ -25,11 +25,11 @@
         - update-helm-chart
     - name: Deploy
       jobs:
-        - deploy-articulate-test
-        - test-articulate-testenv
+        - deploy-articulate-blue
+        - test-articulate-blueenv
         - promote-to-prod
-        - deploy-articulate-prod
-        - test-articulate-prodenv
+        - deploy-articulate-green
+        - test-articulate-greenenv
     # - name: Scanv1
     #   jobs:
     #     - scan-harbor-image
@@ -175,7 +175,7 @@
         params:
           bump: patch
 
-    - name: deploy-articulate-test
+    - name: deploy-articulate-blue
       public: true
       plan:
         - in_parallel:
@@ -183,7 +183,7 @@
           - get: articulate-helmchart
             trigger: true
         - task: deploy-articulate-app
-          file: articulate-ci/tasks/deploy-app/task.yml
+          file: articulate-ci/tasks/deploy-bg/task.yml
           params:
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
@@ -192,6 +192,7 @@
             k8s_cluster_ns: ((k8s-blue-cluster-ns))
             helm_release: ((helm_release))
             PKS_SKIP_TLS_VERIFY: true
+            environment: blue
       on_success:
         put: notify-team
         params:
@@ -204,15 +205,15 @@
             Deploy Articulate Concourse Job Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
    
-    - name: test-articulate-testenv
+    - name: test-articulate-blueenv
       public: true
       plan:
         - in_parallel:
           - get: articulate-ci
           - get: articulate-helmchart
             trigger: true
-            passed: [deploy-articulate-test]
-        - task: test-articulate-testenv
+            passed: [deploy-articulate-blue]
+        - task: test-articulate-blueenv
           file: articulate-ci/tasks/test-app/task.yml
           params:
             PKS_API: ((PKS_API))
@@ -235,7 +236,7 @@
       plan:
         - in_parallel:
           - get: articulate-helmchart
-            passed: [test-articulate-testenv]
+            passed: [test-articulate-blueenv]
           - get: articulate-version
           - get: articulate-version-prod
             resource: articulate-version
@@ -255,7 +256,7 @@
           params:
             bump: minor
 
-    - name: deploy-articulate-prod
+    - name: deploy-articulate-green
       public: true
       plan:
         - in_parallel:
@@ -264,7 +265,7 @@
             trigger: true
             passed: [promote-to-prod]
         - task: deploy-articulate-app
-          file: articulate-ci/tasks/deploy-app/task.yml
+          file: articulate-ci/tasks/deploy-bg/task.yml
           params:
             PKS_API: ((PKS_API))
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
@@ -273,6 +274,7 @@
             k8s_cluster_ns: ((k8s-green-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
+            environment: green
       on_success:
         put: notify-team
         params:
@@ -285,15 +287,15 @@
             Deploy Articulate Concourse Job Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
-    - name: test-articulate-prodenv
+    - name: test-articulate-greenenv
       public: true
       plan:
         - in_parallel:
           - get: articulate-ci
           - get: articulate-helmchart
             trigger: true
-            passed: [deploy-articulate-prod]
-        - task: test-articulate-prodenv
+            passed: [deploy-articulate-green]
+        - task: test-articulate-greenenv
           file: articulate-ci/tasks/test-app/task.yml
           params:
             PKS_API: ((PKS_API))
