@@ -28,4 +28,6 @@ fi
 
 productionSlot=productionSlot=$newSlot
 
+cd ./code
+
 helm upgrade ${helm_release} articulate --set $productionSlot --namespace ${k8s_cluster_ns} --reuse-values

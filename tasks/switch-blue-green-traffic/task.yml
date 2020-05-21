@@ -8,6 +8,8 @@ image_resource:
 inputs:
 - name: articulate-ci
   path: ci
+- name: articulate-helmchart
+  path: code
 
 run:
   path: ./ci/tasks/switch-blue-green-traffic/task.sh
