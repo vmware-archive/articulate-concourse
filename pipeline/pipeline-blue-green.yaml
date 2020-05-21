@@ -21,14 +21,20 @@
         - cve-scan-harbor-image
     - name: Publish
       jobs:
+        - update-helm-chart       
+    - name: CI
+      jobs:
+        - test
+        - build-image
+        - cve-scan-harbor-image
         - update-helm-chart
-    - name: Deploy
+    - name: CD / Deploy
       jobs:
         - deploy-articulate-blue
         - deploy-articulate-green
         - test-articulate-stage-env
         - switch-blue-green-traffic  
-  
+
   resource_types:  
     - name: slack-notification
       type: registry-image
@@ -81,7 +87,6 @@
         branch: ((articulate-helmchart-branch))
         file: articulate/articulate-version
         commit_message: "ci skip"
-        #commit_message: "%version% %file%"
         private_key: ((GIT_PRIVATE_KEY))
         initial_version: 1.0.0
   
@@ -207,7 +212,7 @@
           - get: articulate-ci
           - get: articulate-helmchart
             trigger: true
-            passed: [deploy-articulate-blue]
+            passed: [deploy-articulate-blue, deploy-articulate-green]
         - task: test-articulate-stage-env
           file: articulate-ci/tasks/test-app/task.yml
           params:
@@ -230,6 +235,7 @@
       plan:
         - in_parallel:
           - get: articulate-ci
+          - get: articulate-helmchart
             passed: [test-articulate-stage-env]
         - task: switch-blue-green-traffic
           file: articulate-ci/tasks/switch-blue-green-traffic/task.yml
