@@ -1,6 +1,11 @@
-k8s-test-cluster-name:   articulate-test
-k8s-prod-cluster-name:   articulate-prod
+k8s-blue-cluster-name:   articulate-test
+k8s-blue-cluster-ns:   bluegreen
+k8s-green-cluster-name:   articulate-test
+k8s-green-cluster-ns:   bluegreen
+
 harbor-project: articulate
 articulate-image: articulate
-helm_release: articulate
+helm_release: articulate-bg
+
 articulate-repo-branch: develop
+articulate-helmchart-branch: blue-green
