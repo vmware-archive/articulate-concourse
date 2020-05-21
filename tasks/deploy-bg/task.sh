@@ -40,6 +40,8 @@ else
   echo "Skipping Deployment as it is not a $environment Environment"
 fi
 
+exit 1 
+
 version=`cat ./code/articulate/articulate-version`
 cd ./code
 echo "Deploying App - $version"
