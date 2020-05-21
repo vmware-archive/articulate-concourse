@@ -46,7 +46,7 @@
       icon: github-circle
       source:
         uri: ((articulate-repo))
-        branch: master
+        branch: ((articulate-repo-branch))
         disable_ci_skip: false
         private_key: ((GIT_PRIVATE_KEY))
 
@@ -127,7 +127,6 @@
         params:
           build: articulate-repo
           tag_file: articulate-version/version
-          #tag_file: articulate-repo/.git/refs/heads/master
           tag_as_latest: true
         get_params:
           skip_download: true
@@ -154,7 +153,6 @@
               count: 0
             - severity: Critical
               count: 0
-            #tag: articulate-repo/.git/refs/heads/master
             tag: articulate-version/version
             harbor_host: ((harbor-host))
             username: ((harbor-username))
