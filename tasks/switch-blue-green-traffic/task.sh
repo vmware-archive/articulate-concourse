@@ -15,7 +15,7 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scr
 chmod 700 get_helm.sh
 ./get_helm.sh
 
-currentSlot=`(helm get values --all ${helm_release} --namespace ${k8s_cluster_ns} -o json | jq .productionSlot)`
+currentSlot=`(helm get values --all ${helm_release} --namespace ${k8s_cluster_ns} -o json | jq .productionSlot --raw-output)`
 
 if [ "$currentSlot" = "blue" ];
 then
@@ -25,8 +25,6 @@ else
   newSlot="blue"
   echo "Traffic will be routed to Blue Environment"
 fi
-
-exit 1
 
 productionSlot=productionSlot=$newSlot
 
