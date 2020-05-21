@@ -26,6 +26,8 @@ else
   echo "Traffic will be routed to Blue Environment"
 fi
 
+exit 1
+
 productionSlot=productionSlot=$newSlot
 
 cd ./code
