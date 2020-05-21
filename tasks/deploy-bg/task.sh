@@ -32,7 +32,7 @@ if [ "$environment" = "$newSlot" ];
 then
   echo "Deploying Application to $newSlot Environment"
 else
-  echo "Skipping Deployment as it is not a $environment Environment"
+  echo "Skipping Deployment as it is a $environment Environment"
   exit 0
 fi
 
