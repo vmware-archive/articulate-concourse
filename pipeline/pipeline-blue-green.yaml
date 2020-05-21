@@ -7,10 +7,10 @@
         - cve-scan-harbor-image
         - update-helm-chart
         - deploy-articulate-blue
-        - test-articulate-blueenv
-        - promote-to-prod
+        - test-articulate-stage-env
         - deploy-articulate-green
-        - test-articulate-greenenv
+        - test-articulate-prod-env
+        - switch-blue-green-traffic
     - name: Test
       jobs:
         - test
@@ -26,13 +26,10 @@
     - name: Deploy
       jobs:
         - deploy-articulate-blue
-        - test-articulate-blueenv
-        - promote-to-prod
         - deploy-articulate-green
-        - test-articulate-greenenv
-    # - name: Scanv1
-    #   jobs:
-    #     - scan-harbor-image
+        - test-articulate-stage-env
+        - test-articulate-prod-env
+        - switch-blue-green-traffic  
   
   resource_types:  
     - name: slack-notification
@@ -205,7 +202,7 @@
             Deploy Articulate Concourse Job Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
    
-    - name: test-articulate-blueenv
+    - name: test-articulate-stage-env
       public: true
       plan:
         - in_parallel:
@@ -213,7 +210,7 @@
           - get: articulate-helmchart
             trigger: true
             passed: [deploy-articulate-blue]
-        - task: test-articulate-blueenv
+        - task: test-articulate-stage-env
           file: articulate-ci/tasks/test-app/task.yml
           params:
             PKS_API: ((PKS_API))
@@ -230,31 +227,23 @@
             Test Articulate Test Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
-
-    - name: promote-to-prod
+    - name: switch-blue-green-traffic
       public: true
       plan:
         - in_parallel:
-          - get: articulate-helmchart
-            passed: [test-articulate-blueenv]
-          - get: articulate-version
-          - get: articulate-version-prod
-            resource: articulate-version
-            params:
-              bump: minor
-        - put: articulate-image
+          - get: articulate-ci
+            passed: [test-articulate-stage-env]
+            passed: [test-articulate-prod-env]
+        - task: switch-blue-green-traffic
+          file: articulate-ci/tasks/switch-blue-green-traffic/task.yml
           params:
-            pull_repository: ((harbor-host)):443/((harbor-project))/((articulate-image))
-            tag_file: articulate-version-prod/version
-            pull_tag: latest
-            username: ((harbor-username))
-            password: ((harbor-password))
-            tag_as_latest: true
-          get_params:
-            skip_download: true
-        - put: articulate-version
-          params:
-            bump: minor
+            PKS_API: ((PKS_API))
+            PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
+            PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
+            k8s_cluster_name: ((k8s-green-cluster-name))
+            k8s_cluster_ns: ((k8s-green-cluster-ns))
+            PKS_SKIP_TLS_VERIFY: true
+            helm_release: ((helm_release))
 
     - name: deploy-articulate-green
       public: true
@@ -286,7 +275,7 @@
             Deploy Articulate Concourse Job Failured :x:
             Job: <http://((concourse_host))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|ID>
   
-    - name: test-articulate-greenenv
+    - name: test-articulate-prod-env
       public: true
       plan:
         - in_parallel:
@@ -294,7 +283,8 @@
           - get: articulate-helmchart
             trigger: true
             passed: [deploy-articulate-green]
-        - task: test-articulate-greenenv
+            passed: [deploy-articulate-blue]
+        - task: test-articulate-prod-env
           file: articulate-ci/tasks/test-app/task.yml
           params:
             PKS_API: ((PKS_API))
