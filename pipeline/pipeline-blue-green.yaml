@@ -263,7 +263,6 @@
           - get: articulate-ci
           - get: articulate-helmchart
             trigger: true
-            passed: [promote-to-prod]
         - task: deploy-articulate-app
           file: articulate-ci/tasks/deploy-bg/task.yml
           params:
