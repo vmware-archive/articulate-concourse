@@ -15,27 +15,28 @@ harbor_host=$harbor_host
 harbor_scan_thresholds=$harbor_scan_thresholds
 
 export harbor_image=$(echo $repository | cut -f2- -d '/')
+export harbor_project=$(echo $repository | cut -f2- -d '/' | cut -f2- -d '/')
 export harbor_respoitory_encoded=$harbor_image
 export scan_check_tries=10
 export scan_check_interval=5
 
 harbor_curl_scan() {
-    	response=$(curl -sk --write-out "%{http_code}\n" --output /dev/null -H "Content-Type: application/json" -X POST --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag/scan" )
+    	response=$(curl -sk --write-out "%{http_code}\n" --output /dev/null -H "Content-Type: application/json" -X POST --user $username:$password "https://$harbor_host/api/v2.0/projects/$harbor_project/repositories/$harbor_project/artifacts/$tag/scan" )
     	if [ $response != "202" ]; then
-    		echo "Failed to initiate Harbor Scan on https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag !!!"
+    		echo "Failed to initiate Harbor Scan on https://$harbor_host/api/v2.0/projects/$harbor_project/repositories/$harbor_project/artifacts/$tag/scan !!!"
     		exit 1
     	else
-    		echo "Scan Initiated on https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag ..."
+    		echo "Scan Initiated on https://$harbor_host/api/v2.0/projects/$harbor_project/repositories/$harbor_project/artifacts/$tag/scan ..."
     	fi
     }
 
 harbor_curl_scan_check() {
-    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq '.scan_overview[].scan_status' | tr -d "\"")
+    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/v2.0/projects/$harbor_project/repositories/$harbor_project/artifacts/$tag?with_scan_overview=true" | jq '.scan_overview[].scan_status' | tr -d "\"")
     echo $response
 }
 
 harbor_curl_scan_summary() {
-    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/repositories/$harbor_respoitory_encoded/tags/$tag" | jq '.scan_overview[].summary')
+    response=$(curl -sk -H "Content-Type: application/json" -X GET --user $username:$password "https://$harbor_host/api/v2.0/projects/$harbor_project/repositories/$harbor_project/artifacts/$tag?with_scan_overview=true" | jq '.scan_overview[].summary')
         echo $response
 }
 
@@ -57,6 +58,7 @@ do
         sleep $scan_check_interval
     fi
 done
+
 
 # Checkpipeline thresholds & print Summary Report
 echo "Harbor Summary Report of CVE's found:"

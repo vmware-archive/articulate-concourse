@@ -23,16 +23,19 @@
     - name: Publish
       jobs:
         - update-helm-chart
-    - name: Deploy
+    - name: CI
+      jobs:
+        - test
+        - build-image
+        - cve-scan-harbor-image
+        - update-helm-chart
+    - name: CD / Deploy
       jobs:
         - deploy-articulate-test
         - test-articulate-testenv
         - promote-to-prod
         - deploy-articulate-prod
         - test-articulate-prodenv
-    # - name: Scanv1
-    #   jobs:
-    #     - scan-harbor-image
   
   resource_types:  
     - name: slack-notification
@@ -86,7 +89,6 @@
         branch: master
         file: articulate/articulate-version
         commit_message: "ci skip"
-        #commit_message: "%version% %file%"
         private_key: ((GIT_PRIVATE_KEY))
         initial_version: 1.0.0
   
@@ -189,6 +191,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-test-cluster-name))
+            k8s_cluster_ns: ((k8s-test-cluster-ns))
             helm_release: ((helm_release))
             PKS_SKIP_TLS_VERIFY: true
       on_success:
@@ -218,6 +221,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-test-cluster-name))
+            k8s_cluster_ns: ((k8s-test-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
       on_failure:
@@ -268,6 +272,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-prod-cluster-name))
+            k8s_cluster_ns: ((k8s-prod-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
       on_success:
@@ -297,6 +302,7 @@
             PKS_CLI_USERNAME: ((PKS_CLI_USERNAME))
             PKS_CLI_PASSWORD: ((PKS_CLI_PASSWORD))
             k8s_cluster_name: ((k8s-prod-cluster-name))
+            k8s_cluster_ns: ((k8s-prod-cluster-ns))
             PKS_SKIP_TLS_VERIFY: true
             helm_release: ((helm_release))
       on_failure:
