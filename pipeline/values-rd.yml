@@ -1,6 +1,6 @@
-k8s-test-cluster-name:   articulate-test
+k8s-test-cluster-name:   tkgi-ws2
 k8s-test-cluster-ns:   default
-k8s-prod-cluster-name:   articulate-prod
+k8s-prod-cluster-name:   tkgi-ws1
 k8s-prod-cluster-ns:   default
 
 harbor-project: articulate
