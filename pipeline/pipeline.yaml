@@ -148,11 +148,11 @@
           params:
             harbor_scan_thresholds: 
             - severity: Low
-              count: 10
+              count: 100
             - severity: Medium
-              count: 5
+              count: 100
             - severity: High
-              count: 0
+              count: 20
             - severity: Critical
               count: 0
             tag: articulate-version/version
